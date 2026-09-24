@@ -3,6 +3,7 @@ class Job:
         self.title = "Junior Worker"
 
         self.level = 1
+        self.last_work_day = 0
 
         # Money earned per work shift
         self.salary = 20
@@ -16,11 +17,17 @@ class Job:
         # Review every 5 shifts
         self.review_period = 5
 
-    def work(self, player):
+    def work(self, player, game_time):
+
+        # Already worked today
+        if self.last_work_day == game_time.day:
+            return "You already worked today."
+
+        self.last_work_day = game_time.day
+
         self.work_days += 1
 
-        # Performance depends on how well the character
-        # is doing physically.
+        # Performance depends on the player's condition
         if player.energy >= 50:
             self.performance += 5
         else:
@@ -41,17 +48,14 @@ class Job:
             min(100, self.performance)
         )
 
-        # Regular salary
+        # Earn salary
         player.money += self.salary
 
-        # Check for promotion or salary reduction
+        # Review every 5 shifts
         if self.work_days % self.review_period == 0:
             return self.review()
 
-        return (
-            f"Worked shift. Earned ₦{self.salary}."
-        )
-
+        return f"Worked shift. Earned NGN {self.salary}."
     def review(self):
 
         # Promotion

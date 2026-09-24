@@ -90,7 +90,10 @@ while running:
                             player.hygiene - 10
                         )
 
-                        job_message = job.work(player)
+                        job_message = job.work(
+                                        player,
+                                        game_time
+                                    )
                         job_message_timer = 4
 
                 elif current_location == "house":
