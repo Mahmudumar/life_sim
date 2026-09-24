@@ -4,13 +4,20 @@ class GameTime:
 
         # How many game minutes pass per real second
         self.speed = 2
+        self.day = 1
 
     def update(self, dt):
         self.minutes += self.speed * dt
 
-        # Start a new day after midnight
         if self.minutes >= 24 * 60:
-            self.minutes -= 24 * 60
+            days_passed = int(
+                self.minutes // (24 * 60)
+            )
+
+            self.minutes %= 24 * 60
+
+            self.day += days_passed
+
 
     def get_time(self):
         hours = int(self.minutes // 60)
@@ -30,3 +37,15 @@ class GameTime:
 
     def get_hour(self):
         return self.minutes / 60
+
+    def advance_hours(self, hours):
+        self.minutes += hours * 60
+
+        if self.minutes >= 24 * 60:
+            days_passed = int(
+                self.minutes // (24 * 60)
+            )
+
+            self.minutes %= 24 * 60
+
+            self.day += days_passed

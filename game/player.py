@@ -22,10 +22,17 @@ class Player:
         self.energy = 100
         self.hygiene = 100
 
+        self.health = 100
+        self.alive = True
+
         # Resources
         self.money = 10
+        self.food = 2
 
     def update(self, dt):
+        if not self.alive:
+            return
+
         self.move(dt)
         self.update_needs(dt)
 
@@ -81,6 +88,25 @@ class Player:
         self.energy = max(0, min(100, self.energy))
         self.hygiene = max(0, min(100, self.hygiene))
 
+        # Critical hunger damages health
+        if self.hunger >= 100:
+            self.health -= 2 * dt
+
+        # Critical exhaustion damages health
+        if self.energy <= 0:
+            self.health -= 1 * dt
+
+        # Extremely poor hygiene also becomes dangerous
+        if self.hygiene <= 0:
+            self.health -= 0.5 * dt
+
+        self.health = max(
+            0,
+            min(100, self.health)
+        )
+
+        if self.health <= 0:
+            self.alive = False
     def draw(self, screen):
         pygame.draw.rect(
             screen,

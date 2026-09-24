@@ -79,6 +79,12 @@ class World:
             WIDTH * 0.06,
             HEIGHT * 0.03,
         )
+        self.shop_door = pygame.Rect(
+            right_x + building_width * 0.45,
+            top_y + building_height,
+            WIDTH * 0.06,
+            HEIGHT * 0.03,
+        )
 
         self.road_vertical = pygame.Rect(
             (WIDTH - road_width) / 2,
@@ -140,3 +146,16 @@ class World:
                 text,
                 text_rect,
             )
+
+        # Home entrance
+        pygame.draw.rect(
+            screen,
+            (100, 60, 40),
+            self.home_door,
+        )
+        # Shop entrance
+        pygame.draw.rect(
+            screen,
+            (100, 60, 40),
+            self.shop_door,
+        )

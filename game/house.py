@@ -215,3 +215,33 @@ class House:
             "EXIT",
             self.exit_rect,
         )
+        
+    def get_interaction(self, player_rect):
+        if player_rect.colliderect(self.bed):
+            return "sleep"
+
+        if player_rect.colliderect(self.fridge):
+            return "eat"
+
+        if player_rect.colliderect(self.shower):
+            return "shower"
+
+        if player_rect.colliderect(self.exit_rect):
+            return "exit"
+
+        return None
+
+    def get_interaction_text(self, player_rect):
+        if player_rect.colliderect(self.bed):
+            return "Press E to sleep"
+
+        if player_rect.colliderect(self.fridge):
+            return "Press E to eat"
+
+        if player_rect.colliderect(self.shower):
+            return "Press E to shower"
+
+        if player_rect.colliderect(self.exit_rect):
+            return "Press E to leave"
+
+        return None
