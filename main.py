@@ -1,7 +1,10 @@
 import pygame
 
+from game.actions import ActionSystem
 from game.job import Job
+from game.population import Population
 from game.shop import Shop
+from game.state import GameState
 from settings import WIDTH, HEIGHT, FPS, TITLE
 from game.world import World
 from game.player import Player
@@ -22,9 +25,18 @@ world = World()
 player = Player()
 game_time = GameTime()
 house = House()
-
+population = Population(
+    world.buildings
+)
 shop = Shop()
 job = Job()
+game_state = GameState(
+    player,
+    game_time,
+    job,
+    population.npcs
+)
+
 
 current_location = "city"
 
@@ -54,6 +66,17 @@ while running:
             if event.key == pygame.K_e:
 
                 if current_location == "city":
+                    nearby_npc = population.get_nearby_npc(
+                        player.rect
+                    )
+
+                    if nearby_npc is not None:
+
+                        job_message = nearby_npc.talk(
+                            game_time
+                        )
+
+                        job_message_timer = 3
 
                     if player.rect.colliderect(world.home_door):
                         current_location = "house"
@@ -73,57 +96,43 @@ while running:
                     elif player.rect.colliderect(
                         world.buildings[2]["rect"]
                     ):
-                        game_time.advance_hours(8)
 
-                        player.energy = max(
-                            0,
-                            player.energy - 35
+                        job_message = ActionSystem.work(
+                            player,
+                            job,
+                            game_time
                         )
 
-                        player.hunger = min(
-                            100,
-                            player.hunger + 20
-                        )
-
-                        player.hygiene = max(
-                            0,
-                            player.hygiene - 10
-                        )
-
-                        job_message = job.work(
-                                        player,
-                                        game_time
-                                    )
                         job_message_timer = 4
 
                 elif current_location == "house":
                     interaction = house.get_interaction(
                         player.rect
                     )
-
                     if interaction == "sleep":
-                        game_time.advance_hours(8)
-                        player.energy = 100
 
-                        # Sleeping makes you hungry
-                        player.hunger += 20
+                        job_message = ActionSystem.sleep(
+                            player,
+                            game_time
+                        )
 
-                        # Sleeping makes you slightly less clean
-                        player.hygiene -= 10
+                        job_message_timer = 2
 
                     elif interaction == "eat":
 
-                        if player.food > 0:
-                            player.food -= 1
+                        job_message = ActionSystem.eat(
+                            player
+                        )
 
-                            player.hunger = max(
-                                0,
-                                player.hunger - 30
-                            )
+                        job_message_timer = 2
 
                     elif interaction == "shower":
-                        player.hygiene = 100
 
+                        job_message = ActionSystem.shower(
+                            player
+                        )
+
+                        job_message_timer = 2
                     elif player.rect.colliderect(
                         house.exit_rect
                     ):
@@ -141,31 +150,32 @@ while running:
                     )
 
                     if interaction == "buy_food":
-
-                        if player.money >= shop.food_price:
-                            player.money -= shop.food_price
-                            player.food += 1
-
-                    elif interaction == "exit":
-
-                        current_location = "city"
-
-                        player.rect.center = (
-                            WIDTH * 0.75,
-                            HEIGHT // 2
+                        job_message = ActionSystem.buy_food(
+                            player,
+                            shop
                         )
 
+                        job_message_timer = 2
 
     # Update
-
     game_time.update(dt)
+
     player.update(dt)
+
+    population.update(
+        dt,
+        game_time,
+        player.rect
+    )
 
     if not player.alive:
         current_location = "dead"
 
     if current_location == "city":
         world.draw(screen)
+
+    if current_location == "city":
+        population.draw(screen)
 
     elif current_location == "house":
         house.draw(screen)
@@ -205,6 +215,7 @@ while running:
         )
 
         if interaction_text:
+
             prompt_font = pygame.font.Font(
                 None,
                 28
@@ -220,7 +231,112 @@ while running:
                 center=(WIDTH // 2, HEIGHT - 40)
             )
 
-            # Background behind the prompt
+            background = pygame.Surface(
+                (
+                    prompt_rect.width + 20,
+                    prompt_rect.height + 10
+                ),
+                pygame.SRCALPHA
+            )
+
+            background.fill(
+                (20, 20, 20, 190)
+            )
+
+            screen.blit(
+                background,
+                (
+                    prompt_rect.x - 10,
+                    prompt_rect.y - 5
+                )
+            )
+
+            screen.blit(
+                prompt,
+                prompt_rect
+            )
+
+    elif current_location == "shop":
+
+        interaction_text = shop.get_interaction_text(
+            player.rect,
+            player.money
+        )
+
+        if interaction_text:
+
+            prompt_font = pygame.font.Font(
+                None,
+                28
+            )
+
+            prompt = prompt_font.render(
+                interaction_text,
+                True,
+                (255, 255, 255)
+            )
+
+            prompt_rect = prompt.get_rect(
+                center=(WIDTH // 2, HEIGHT - 40)
+            )
+
+            background = pygame.Surface(
+                (
+                    prompt_rect.width + 20,
+                    prompt_rect.height + 10
+                ),
+                pygame.SRCALPHA
+            )
+
+            background.fill(
+                (20, 20, 20, 190)
+            )
+
+            screen.blit(
+                background,
+                (
+                    prompt_rect.x - 10,
+                    prompt_rect.y - 5
+                )
+            )
+
+            screen.blit(
+                prompt,
+                prompt_rect
+            )
+
+    elif current_location == "city":
+        
+        nearby_npc = population.get_nearby_npc(
+                player.rect
+            )
+
+        interaction_text = None
+
+        if nearby_npc is not None:
+            interaction_text = (
+                f"Press E to talk to "
+                f"{nearby_npc.name} "
+                f"({nearby_npc.get_relationship_label()})"
+            )
+
+        if interaction_text:
+
+            prompt_font = pygame.font.Font(
+                None,
+                28
+            )
+
+            prompt = prompt_font.render(
+                interaction_text,
+                True,
+                (255, 255, 255)
+            )
+
+            prompt_rect = prompt.get_rect(
+                center=(WIDTH // 2, HEIGHT - 40)
+            )
+
             background = pygame.Surface(
                 (
                     prompt_rect.width + 20,
@@ -300,7 +416,6 @@ while running:
 
     row_gap = 30
 
-
     # -------------------------
     # Text we need to display
     # -------------------------
@@ -318,7 +433,9 @@ while running:
     )
 
     time_text = stat_font.render(
-        game_time.get_time(),
+        f"Day {game_time.day}  •  "
+        f"{game_time.get_time()}  •  "
+        f"{game_time.get_period()}",
         True,
         (255, 255, 255)
     )
@@ -334,7 +451,6 @@ while running:
         True,
         (255, 220, 100)
     )
-
 
     # -------------------------
     # Work out positions
@@ -377,7 +493,6 @@ while running:
         + 5
     )
 
-
     # -------------------------
     # Let the height fit content
     # -------------------------
@@ -388,7 +503,6 @@ while running:
         + padding
     )
 
-
     # Width needs to fit the longest content
     hud_width = max(
         230,
@@ -398,7 +512,6 @@ while running:
         food_text.get_width() + padding * 2,
         money_text.get_width() + padding * 2,
     )
-
 
     # -------------------------
     # Create HUD
@@ -414,7 +527,6 @@ while running:
         (20, 20, 20, 180)
     )
 
-
     # -------------------------
     # Draw title
     # -------------------------
@@ -424,20 +536,17 @@ while running:
         (padding, title_y)
     )
 
-
     # Job information
     hud_surface.blit(
         job_info,
         (padding, job_info_y)
     )
 
-
     # Time
     hud_surface.blit(
         time_text,
         (padding, time_y)
     )
-
 
     # -------------------------
     # Helper for stat bars
@@ -488,7 +597,6 @@ while running:
             border_radius=5
         )
 
-
     # -------------------------
     # Stats
     # -------------------------
@@ -521,7 +629,6 @@ while running:
         health_y
     )
 
-
     # -------------------------
     # Food
     # -------------------------
@@ -531,7 +638,6 @@ while running:
         (padding, food_y)
     )
 
-
     # -------------------------
     # Money
     # -------------------------
@@ -540,7 +646,6 @@ while running:
         money_text,
         (padding, money_y)
     )
-
 
     # -------------------------
     # Put HUD on screen

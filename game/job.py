@@ -56,6 +56,19 @@ class Job:
             return self.review()
 
         return f"Worked shift. Earned NGN {self.salary}."
+
+    def can_work(self, game_time):
+        hour = game_time.get_hour()
+
+        # Work between 8 AM and 5 PM
+        if hour < 8 or hour >= 17:
+            return False
+
+        # Only one shift per day
+        if self.last_work_day == game_time.day:
+            return False
+
+        return True
     def review(self):
 
         # Promotion

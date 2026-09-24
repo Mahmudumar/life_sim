@@ -106,3 +106,16 @@ class Shop:
             return "exit"
 
         return None
+
+    def get_interaction_text(self, player_rect, money):
+        if player_rect.colliderect(self.counter):
+
+            if money >= self.food_price:
+                return f"Press E to buy food - NGN {self.food_price}"
+
+            return "Not enough money"
+
+        if player_rect.colliderect(self.exit_rect):
+            return "Press E to leave"
+
+        return None

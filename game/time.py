@@ -49,3 +49,17 @@ class GameTime:
             self.minutes %= 24 * 60
 
             self.day += days_passed
+
+    def get_period(self):
+        hour = self.get_hour()
+
+        if hour < 6:
+            return "Night"
+        elif hour < 12:
+            return "Morning"
+        elif hour < 17:
+            return "Afternoon"
+        elif hour < 21:
+            return "Evening"
+        else:
+            return "Night"
